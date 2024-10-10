@@ -40,6 +40,64 @@ char** textToStatements(char* input, int* retSize) {
     return statements;
 }
 
+char*** statementsToTokens(char** statements, int statementsSize, int** retSizes) {
+    char*** tokenLists = malloc(statementsSize * sizeof(char**));
+    for (int i = 0; i < statementsSize; i++) {
+
+        char** tokenList = malloc(0);
+        int numTokenLists = 0;
+        int idx = 0;
+
+        // Go to start of first token
+        while (statements[i][idx] == ' ') {
+            idx++;
+        }
+
+        while (statements[i][idx]) {
+
+            numTokenLists++;
+            tokenList = realloc(tokenList, numTokenLists * sizeof(char*));
+
+            // Find length of token
+            int start = idx;
+            while (statements[i][idx] != ' ') {
+                if (statements[i][idx] == 0) {
+                    break;
+                }
+                idx++;
+            }
+            int length = idx - start;
+
+            // Create token
+            char* token = malloc((length + 1) * sizeof(char));
+            for (int j = start; j < idx; j++) {
+                token[j-start] = statements[i][j];
+            }
+
+            token[length] = 0;
+            tokenList[numTokenLists-1] = token;
+            idx++;
+
+            // Go to start of next token
+            while (statements[i][idx] == ' ') {
+                idx++;
+            }
+
+        }
+
+        (*retSizes)[i] = numTokenLists;
+        tokenLists[i] = tokenList;
+    }
+
+    // Free up statements
+    for (int i = 0; i < statementsSize; i++) {
+        free(statements[i]);
+    }
+
+    free(statements);
+    return tokenLists;
+}
+
 
 int main(int argc, char* argv[]) {
     printf("Rex - BareBones Interpreter\n");
@@ -62,5 +120,17 @@ int main(int argc, char* argv[]) {
 
     for (int i = 0; i < numStatements; i++) {
         printf("%s\n", statements[i]);
+    }
+
+    int* numTokens = malloc(numStatements * sizeof(int));
+    char*** tokens = statementsToTokens(statements, numStatements, &numTokens);
+
+    printf("\n");
+
+    for (int i = 0; i < numStatements; i++) {
+        for (int j = 0; j < numTokens[i]; j++) {
+            printf("%s\n", tokens[i][j]);
+        }
+        printf("\n");
     }
 }
