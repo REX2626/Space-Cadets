@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 
 
@@ -39,6 +40,7 @@ char** textToStatements(char* input, int* retSize) {
     *retSize = numStatements;
     return statements;
 }
+
 
 char*** statementsToTokens(char** statements, int statementsSize, int** retSizes) {
     char*** tokenLists = malloc(statementsSize * sizeof(char**));
@@ -99,6 +101,98 @@ char*** statementsToTokens(char** statements, int statementsSize, int** retSizes
 }
 
 
+unsigned int hash(char* name) {
+    int value = 1;
+    int i = 0;
+    while (name[i]) {
+        value += name[i] * (i+1);
+        i++;
+    }
+
+    return value;
+}
+
+bool strEqual(char* str1, char* str2) {
+    int i = 0;
+    while (str1[i] && str2[i]) {
+        if (str1[i] != str2[i]) return false;
+        i++;
+    }
+
+    return true;
+}
+
+typedef struct {
+    unsigned int value;
+    char* name;
+} TableValue;
+
+typedef struct {
+    int size;
+    int maxLength;
+    TableValue* values;
+} HashTable;
+
+HashTable initTable(void) {
+    HashTable table;
+    table.size = 0;
+    table.maxLength = 1;
+    table.values = malloc(sizeof(TableValue));
+    table.values[0].name = "";
+
+    return table;
+}
+
+void setVariable(HashTable* table, char* name, unsigned int value) {
+    unsigned int hashValue = hash(name);
+    int idx = hashValue;
+
+    // If the table is too small, double the maxLength then copy the table contents to a new hashTable value array
+    table->size++;
+    if (2 * (table->size) > table->maxLength) {
+        table->maxLength *= 2;
+        TableValue* values = malloc(table->maxLength * sizeof(TableValue));
+        for (int i = 0; i < table->maxLength; i++) values[i].name = "";
+        for (int i = 0; i < table->maxLength/2; i++) {
+            if (table->values[i].name[0] == 0) continue;
+            values[hash(table->values[i].name) % table->maxLength] = table->values[i];
+        }
+
+        TableValue* oldValues = table->values;
+        table->values = values;
+        free(oldValues);
+    }
+
+    idx %= table->maxLength;
+
+    // Go through table until we find a name match
+    // If we find an empty slot, add variable
+    while (!strEqual(table->values[idx].name, name)) {
+        if (table->values[idx].name[0] == 0) {
+            table->values[idx].name = name;
+            break;
+        }
+        idx++;
+        if (idx == table->maxLength) idx = 0;
+    }
+
+    // Set the value of the variable
+    table->values[idx].value = value;
+}
+
+unsigned int getVariable(HashTable* table, char* name) {
+    int idx = hash(name);
+    idx %= table->maxLength;
+
+    while (!strEqual(table->values[idx].name, name)) {
+        idx++;
+        if (idx == table->maxLength) idx = 0;
+    }
+
+    return table->values[idx].value;
+}
+
+
 int main(int argc, char* argv[]) {
     printf("Rex - BareBones Interpreter\n");
     char* inputFile;
@@ -115,6 +209,7 @@ int main(int argc, char* argv[]) {
     // FILE* file = fopen(inputFile, "r");
     char* file = "Hello; this is a test; with delimiters;";
 
+    // Generate an array of statements
     int numStatements;
     char** statements = textToStatements(file, &numStatements);
 
@@ -122,6 +217,7 @@ int main(int argc, char* argv[]) {
         printf("%s\n", statements[i]);
     }
 
+    // Generate an array of token lists
     int* numTokens = malloc(numStatements * sizeof(int));
     char*** tokens = statementsToTokens(statements, numStatements, &numTokens);
 
@@ -133,4 +229,12 @@ int main(int argc, char* argv[]) {
         }
         printf("\n");
     }
+
+    // Create the variables table
+    HashTable varTable = initTable();
+
+    int value = 12;
+    printf("Setting x to %d\n", value);
+    setVariable(&varTable, "x", value);
+    printf("x = %d\n", getVariable(&varTable, "x"));
 }
