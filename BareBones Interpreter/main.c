@@ -144,6 +144,7 @@ HashTable initTable(void) {
 }
 
 void setVariable(HashTable* table, char* name, unsigned int value) {
+    printf("Setting %s to %d\n", name, value);
     unsigned int hashValue = hash(name);
     int idx = hashValue;
 
@@ -189,6 +190,8 @@ unsigned int getVariable(HashTable* table, char* name) {
         if (idx == table->maxLength) idx = 0;
     }
 
+
+    printf("Value %s = %d\n", name, table->values[idx].value);
     return table->values[idx].value;
 }
 
@@ -207,7 +210,7 @@ int main(int argc, char* argv[]) {
     }
 
     // FILE* file = fopen(inputFile, "r");
-    char* file = "Hello; this is a test; with delimiters;";
+    char* file = "clear x; clear y; clear z;";
 
     // Generate an array of statements
     int numStatements;
@@ -219,13 +222,13 @@ int main(int argc, char* argv[]) {
 
     // Generate an array of token lists
     int* numTokens = malloc(numStatements * sizeof(int));
-    char*** tokens = statementsToTokens(statements, numStatements, &numTokens);
+    char*** tokenLists = statementsToTokens(statements, numStatements, &numTokens);
 
     printf("\n");
 
     for (int i = 0; i < numStatements; i++) {
         for (int j = 0; j < numTokens[i]; j++) {
-            printf("%s\n", tokens[i][j]);
+            printf("%s\n", tokenLists[i][j]);
         }
         printf("\n");
     }
@@ -233,8 +236,19 @@ int main(int argc, char* argv[]) {
     // Create the variables table
     HashTable varTable = initTable();
 
-    int value = 12;
-    printf("Setting x to %d\n", value);
-    setVariable(&varTable, "x", value);
-    printf("x = %d\n", getVariable(&varTable, "x"));
+    // Go through tokens and execute
+    for (int stIdx = 0; stIdx < numStatements; stIdx++) {
+        printf("Executing statement %d\n", stIdx);
+        char** tokenList = tokenLists[stIdx];
+
+        if (strEqual(tokenList[0], "clear")) {
+            setVariable(&varTable, tokenList[1], 0);
+        }
+
+        else {
+            printf("ERROR: Command %s is not valid\n", tokenList[0]);
+            break;
+        }
+
+    }
 }
