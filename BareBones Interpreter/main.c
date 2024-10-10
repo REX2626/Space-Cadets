@@ -78,7 +78,6 @@ char*** statementsToTokens(char** statements, int statementsSize, int** retSizes
 
             token[length] = 0;
             tokenList[numTokenLists-1] = token;
-            idx++;
 
             // Go to start of next token
             while (statements[i][idx] == ' ') {
@@ -114,7 +113,7 @@ unsigned int hash(char* name) {
 
 bool strEqual(char* str1, char* str2) {
     int i = 0;
-    while (str1[i] && str2[i]) {
+    while (str1[i] || str2[i]) {
         if (str1[i] != str2[i]) return false;
         i++;
     }
@@ -148,29 +147,15 @@ void setVariable(HashTable* table, char* name, unsigned int value) {
     unsigned int hashValue = hash(name);
     int idx = hashValue;
 
-    // If the table is too small, double the maxLength then copy the table contents to a new hashTable value array
-    table->size++;
-    if (2 * (table->size) > table->maxLength) {
-        table->maxLength *= 2;
-        TableValue* values = malloc(table->maxLength * sizeof(TableValue));
-        for (int i = 0; i < table->maxLength; i++) values[i].name = "";
-        for (int i = 0; i < table->maxLength/2; i++) {
-            if (table->values[i].name[0] == 0) continue;
-            values[hash(table->values[i].name) % table->maxLength] = table->values[i];
-        }
-
-        TableValue* oldValues = table->values;
-        table->values = values;
-        free(oldValues);
-    }
-
     idx %= table->maxLength;
 
     // Go through table until we find a name match
     // If we find an empty slot, add variable
+    bool nameFound = true;
     while (!strEqual(table->values[idx].name, name)) {
         if (table->values[idx].name[0] == 0) {
             table->values[idx].name = name;
+            nameFound = false;
             break;
         }
         idx++;
@@ -179,6 +164,24 @@ void setVariable(HashTable* table, char* name, unsigned int value) {
 
     // Set the value of the variable
     table->values[idx].value = value;
+
+    // If the table is too small, double the maxLength then copy the table contents to a new hashTable value array
+    if (!nameFound) {
+        table->size++;
+        if (2 * (table->size) > table->maxLength) {
+            table->maxLength *= 2;
+            TableValue* values = malloc(table->maxLength * sizeof(TableValue));
+            for (int i = 0; i < table->maxLength; i++) values[i].name = "";
+            for (int i = 0; i < table->maxLength/2; i++) {
+                if (table->values[i].name[0] == 0) continue;
+                values[hash(table->values[i].name) % table->maxLength] = table->values[i];
+            }
+
+            TableValue* oldValues = table->values;
+            table->values = values;
+            free(oldValues);
+        }
+    }
 }
 
 unsigned int getVariable(HashTable* table, char* name) {
@@ -210,7 +213,7 @@ int main(int argc, char* argv[]) {
     }
 
     // FILE* file = fopen(inputFile, "r");
-    char* file = "clear x; clear y; clear z;";
+    char* file = "clear x; incr x; decr x; decr x; decr x; decr x;";
 
     // Generate an array of statements
     int numStatements;
@@ -239,10 +242,19 @@ int main(int argc, char* argv[]) {
     // Go through tokens and execute
     for (int stIdx = 0; stIdx < numStatements; stIdx++) {
         printf("Executing statement %d\n", stIdx);
+
         char** tokenList = tokenLists[stIdx];
 
         if (strEqual(tokenList[0], "clear")) {
             setVariable(&varTable, tokenList[1], 0);
+        }
+
+        else if (strEqual(tokenList[0], "incr")) {
+            setVariable(&varTable, tokenList[1], getVariable(&varTable, tokenList[1]) + 1);
+        }
+
+        else if (strEqual(tokenList[0], "decr")) {
+            setVariable(&varTable, tokenList[1], getVariable(&varTable, tokenList[1]) - 1);
         }
 
         else {
