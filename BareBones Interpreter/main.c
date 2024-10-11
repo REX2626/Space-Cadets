@@ -368,12 +368,33 @@ int main(int argc, char* argv[]) {
         char** tokenList = tokenLists[stIdx];
 
         if (strEqual(tokenList[0], "clear")) {
+            if (numTokens[stIdx] == 1) {
+                beginError();
+                printf("Missing variable name");
+                endError();
+                break;
+            } else if (numTokens[stIdx] > 2) {
+                beginError();
+                printf("Too many arguments for command");
+                endError();
+                break;
+            }
             setVariable(&varTable, tokenList[1], 0);
         }
 
         else if (strEqual(tokenList[0], "incr")) {
+            if (numTokens[stIdx] == 1) {
+                beginError();
+                printf("Missing variable name");
+                endError();
+                break;
+            } else if (numTokens[stIdx] > 2) {
+                beginError();
+                printf("Too many arguments for command");
+                endError();
+                break;
+            }
             if (!declaredVariable(&varTable, tokenList[1])) {
-                // printf("\033[1;31mERROR: variable %s has not been declared\033[0m\n", tokenList[1]);
                 beginError();
                 printf("Variable %s has not been declared", tokenList[1]);
                 endError();
@@ -383,6 +404,17 @@ int main(int argc, char* argv[]) {
         }
 
         else if (strEqual(tokenList[0], "decr")) {
+            if (numTokens[stIdx] == 1) {
+                beginError();
+                printf("Missing variable name");
+                endError();
+                break;
+            } else if (numTokens[stIdx] > 2) {
+                beginError();
+                printf("Too many arguments for command");
+                endError();
+                break;
+            }
             if (!declaredVariable(&varTable, tokenList[1])) {
                 beginError();
                 printf("Variable %s has not been declared", tokenList[1]);
