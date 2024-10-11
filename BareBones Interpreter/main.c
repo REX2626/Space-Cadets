@@ -367,7 +367,11 @@ int main(int argc, char* argv[]) {
 
         char** tokenList = tokenLists[stIdx];
 
-        if (strEqual(tokenList[0], "clear")) {
+        if (numTokens[stIdx] == 0) {
+            continue;
+        }
+
+        else if (strEqual(tokenList[0], "clear")) {
             if (numTokens[stIdx] == 1) {
                 beginError();
                 printf("Missing variable name");
