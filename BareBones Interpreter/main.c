@@ -193,9 +193,55 @@ unsigned int getVariable(HashTable* table, char* name) {
         if (idx == table->maxLength) idx = 0;
     }
 
-
     printf("Value %s = %d\n", name, table->values[idx].value);
     return table->values[idx].value;
+}
+
+bool declaredVariable(HashTable* table, char* name) {
+    int idx = hash(name);
+    idx %= table->maxLength;
+
+    while (table->values[idx].name[0]) {
+        if (strEqual(table->values[idx].name, name)) return true;
+        idx++;
+        if (idx == table->maxLength) idx = 0;
+    }
+
+    return false;
+}
+
+typedef struct {
+    int line;
+    char* name;
+} WhileValue;
+
+typedef struct {
+    int length;
+    WhileValue* values;
+} Stack;
+
+Stack initStack(void) {
+    Stack stack;
+    stack.length = 0;
+    stack.values = malloc(0);
+
+    return stack;
+}
+
+void stackPush(Stack* stack, int line, char* name) {
+    stack->length++;
+    stack->values = realloc(stack->values, stack->length * sizeof(WhileValue));
+    stack->values[stack->length-1].line = line;
+    stack->values[stack->length-1].name = name;
+}
+
+void stackPop(Stack* stack) {
+    stack->length--;
+    stack->values = realloc(stack->values, stack->length * sizeof(WhileValue));
+}
+
+WhileValue stackGet(Stack* stack) {
+    return stack->values[stack->length-1];
 }
 
 
@@ -213,7 +259,7 @@ int main(int argc, char* argv[]) {
     }
 
     // FILE* file = fopen(inputFile, "r");
-    char* file = "clear x; incr x; decr x; decr x; decr x; decr x;";
+    char* file = "clear x; incr x; incr x; incr x; while x not 0 do; decr x; clear y; incr y; while y not 0 do; decr y; end; end;";
 
     // Generate an array of statements
     int numStatements;
@@ -239,6 +285,9 @@ int main(int argc, char* argv[]) {
     // Create the variables table
     HashTable varTable = initTable();
 
+    // Create a stack for while loops variable
+    Stack whileStack = initStack();
+
     // Go through tokens and execute
     for (int stIdx = 0; stIdx < numStatements; stIdx++) {
         printf("Executing statement %d\n", stIdx);
@@ -255,6 +304,21 @@ int main(int argc, char* argv[]) {
 
         else if (strEqual(tokenList[0], "decr")) {
             setVariable(&varTable, tokenList[1], getVariable(&varTable, tokenList[1]) - 1);
+        }
+
+        else if (strEqual(tokenList[0], "while")) {
+            if (!declaredVariable(&varTable, tokenList[1])) {
+                setVariable(&varTable, tokenList[1], 0);
+            }
+            stackPush(&whileStack, stIdx, tokenList[1]);
+        }
+
+        else if (strEqual(tokenList[0], "end")) {
+            if (getVariable(&varTable, stackGet(&whileStack).name) == 0) {
+                stackPop(&whileStack);
+            } else {
+                stIdx = stackGet(&whileStack).line;
+            }
         }
 
         else {
