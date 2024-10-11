@@ -433,7 +433,7 @@ int main(int argc, char* argv[]) {
             }
             if (numTokens[stIdx] > 5) {
                 beginError();
-                printf("Too many arguments in while loop, format is: 'while var_name not 0 do'");
+                printf("Too many arguments for while loop, format is: 'while var_name not 0 do'");
                 endError();
                 break;
             }
@@ -465,6 +465,12 @@ int main(int argc, char* argv[]) {
         }
 
         else if (strEqual(tokenList[0], "end")) {
+            if (numTokens[stIdx] > 1) {
+                beginError();
+                printf("Too many arguments for command");
+                endError();
+                break;
+            }
             if (getVariable(&varTable, stackGet(&whileStack).name) == 0) {
                 stackPop(&whileStack);
             } else {

@@ -1,7 +1,7 @@
 clear x;
 clear y;
-incr y;
+incr y;;
 decr y;
 while x not 0 do;
 incr y;
-end me;
+end;
