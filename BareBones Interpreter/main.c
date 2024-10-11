@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#define DEBUG false
+
 
 
 char** textToStatements(char* input, int* retSize) {
@@ -144,7 +146,6 @@ HashTable initTable(void) {
 }
 
 void setVariable(HashTable* table, char* name, unsigned int value) {
-    printf("Setting %s to %d\n", name, value);
     unsigned int hashValue = hash(name);
     int idx = hashValue;
 
@@ -194,7 +195,6 @@ unsigned int getVariable(HashTable* table, char* name) {
         if (idx == table->maxLength) idx = 0;
     }
 
-    printf("Value %s = %d\n", name, table->values[idx].value);
     return table->values[idx].value;
 }
 
@@ -245,6 +245,24 @@ WhileValue stackGet(Stack* stack) {
     return stack->values[stack->length-1];
 }
 
+void displayVariables(HashTable* varTable) {
+    int i;
+    for (i = 0; i < varTable->maxLength; i++) {
+        if (varTable->values[i].name[0]) {
+            printf("%s %u", varTable->values[i].name, varTable->values[i].value);
+            break;
+        }
+    }
+
+    for (int j = i+1; j < varTable->maxLength; j++) {
+        if (varTable->values[j].name[0]) {
+            printf(" | %s %u", varTable->values[j].name, varTable->values[j].value);
+        }
+    }
+
+    printf("\n");
+}
+
 void beginError(void) {
     printf("\033[1;31mERROR: ");
 }
@@ -282,31 +300,37 @@ int main(int argc, char* argv[]) {
     text[size] = 0;
 
     printf("----------\n");
-    printf("%s\n", text);
-    printf("----------\n");
+    if (DEBUG) {
+        printf("%s\n", text);
+        printf("----------\n");
+    }
 
     // Generate an array of statements
     int numStatements;
     char** statements = textToStatements(text, &numStatements);
 
-    for (int i = 0; i < numStatements; i++) {
-        printf("%s\n", statements[i]);
+    if (DEBUG) {
+        for (int i = 0; i < numStatements; i++) {
+            printf("%s\n", statements[i]);
+        }
     }
 
     // Generate an array of token lists
     int* numTokens = malloc(numStatements * sizeof(int));
     char*** tokenLists = statementsToTokens(statements, numStatements, &numTokens);
 
-    printf("----------\n");
+    if (DEBUG) {
+        printf("----------\n");
 
-    for (int i = 0; i < numStatements; i++) {
-        for (int j = 0; j < numTokens[i]; j++) {
-            printf("%s\n", tokenLists[i][j]);
+        for (int i = 0; i < numStatements; i++) {
+            for (int j = 0; j < numTokens[i]; j++) {
+                printf("%s\n", tokenLists[i][j]);
+            }
+            printf("\n");
         }
-        printf("\n");
-    }
 
-    printf("----------\n");
+        printf("----------\n");
+    }
 
     // Create the variables table
     HashTable varTable = initTable();
@@ -316,7 +340,6 @@ int main(int argc, char* argv[]) {
 
     // Go through tokens and execute
     for (int stIdx = 0; stIdx < numStatements; stIdx++) {
-        printf("Executing statement %d\n", stIdx);
 
         char** tokenList = tokenLists[stIdx];
 
@@ -367,6 +390,9 @@ int main(int argc, char* argv[]) {
             break;
         }
 
+        printf("Statement %d: ", stIdx);
+        displayVariables(&varTable);
     }
+    printf("----------\n");
     printf("Interpreter finished.\n");
 }
