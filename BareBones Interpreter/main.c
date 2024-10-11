@@ -394,7 +394,10 @@ int main(int argc, char* argv[]) {
 
         else if (strEqual(tokenList[0], "while")) {
             if (!declaredVariable(&varTable, tokenList[1])) {
-                setVariable(&varTable, tokenList[1], 0);
+                beginError();
+                printf("Variable %s has not been declared", tokenList[1]);
+                endError();
+                break;
             }
             stackPush(&whileStack, stIdx, tokenList[1]);
         }

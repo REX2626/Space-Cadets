@@ -2,4 +2,3 @@ clear x;
 while x not 0 do;
     incr x;
 end;
-end;
