@@ -34,6 +34,7 @@ char** textToStatements(char* input, int* retSize) {
 
         statements[countStatement] = statement;
         countStatement++;
+        if (countStatement == numStatements) break;
         i += j - i;
     }
 
@@ -51,7 +52,7 @@ char*** statementsToTokens(char** statements, int statementsSize, int** retSizes
         int idx = 0;
 
         // Go to start of first token
-        while (statements[i][idx] == ' ') {
+        while (statements[i][idx] == ' ' || statements[i][idx] == '\n' || statements[i][idx] == '\r') {
             idx++;
         }
 
@@ -258,12 +259,25 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // FILE* file = fopen(inputFile, "r");
-    char* file = "clear x; incr x; incr x; incr x; while x not 0 do; decr x; clear y; incr y; while y not 0 do; decr y; end; end;";
+    // Get code from file
+    FILE* file = fopen(inputFile, "rb");
+    fseek(file, 0, SEEK_END);
+
+    long size = ftell(file);
+    rewind(file);
+
+    char text[size+1];
+    fread(text, size, 1, file);
+    fclose(file);
+    text[size] = 0;
+
+    printf("----------\n");
+    printf("%s\n", text);
+    printf("----------\n");
 
     // Generate an array of statements
     int numStatements;
-    char** statements = textToStatements(file, &numStatements);
+    char** statements = textToStatements(text, &numStatements);
 
     for (int i = 0; i < numStatements; i++) {
         printf("%s\n", statements[i]);
@@ -273,7 +287,7 @@ int main(int argc, char* argv[]) {
     int* numTokens = malloc(numStatements * sizeof(int));
     char*** tokenLists = statementsToTokens(statements, numStatements, &numTokens);
 
-    printf("\n");
+    printf("----------\n");
 
     for (int i = 0; i < numStatements; i++) {
         for (int j = 0; j < numTokens[i]; j++) {
@@ -281,6 +295,8 @@ int main(int argc, char* argv[]) {
         }
         printf("\n");
     }
+
+    printf("----------\n");
 
     // Create the variables table
     HashTable varTable = initTable();
@@ -327,4 +343,5 @@ int main(int argc, char* argv[]) {
         }
 
     }
+    printf("Execution completed!\n");
 }
