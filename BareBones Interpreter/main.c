@@ -425,9 +425,39 @@ int main(int argc, char* argv[]) {
         }
 
         else if (strEqual(tokenList[0], "while")) {
+            if (numTokens[stIdx] < 5) {
+                beginError();
+                printf("Missing rest of while loop, format is: 'while var_name not 0 do'");
+                endError();
+                break;
+            }
+            if (numTokens[stIdx] > 5) {
+                beginError();
+                printf("Too many arguments in while loop, format is: 'while var_name not 0 do'");
+                endError();
+                break;
+            }
             if (!declaredVariable(&varTable, tokenList[1])) {
                 beginError();
                 printf("Variable %s has not been declared", tokenList[1]);
+                endError();
+                break;
+            }
+            if (!strEqual(tokenList[2], "not")) {
+                beginError();
+                printf("Third argument of while loop should be 'not' instead of %s", tokenList[2]);
+                endError();
+                break;
+            }
+            if (!strEqual(tokenList[3], "0")) {
+                beginError();
+                printf("Fourth argument of while loop should be '0' instead of %s", tokenList[3]);
+                endError();
+                break;
+            }
+            if (!strEqual(tokenList[4], "do")) {
+                beginError();
+                printf("Fifth argument of while loop should be 'do' instead of %s", tokenList[4]);
                 endError();
                 break;
             }
