@@ -1,15 +1,3 @@
 clear x;
-incr x;
-incr x    ;
-incr x;
-    while x not 0 do;
-                    decr x;
-    clear y;
-    incr y;
-
-
-
-    while y not 0 do;
-                    decr y;
-    end;
-end;
+while x not 0 do;
+    incr x;

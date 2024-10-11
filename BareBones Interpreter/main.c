@@ -245,6 +245,14 @@ WhileValue stackGet(Stack* stack) {
     return stack->values[stack->length-1];
 }
 
+void beginError(void) {
+    printf("\033[1;31mERROR: ");
+}
+
+void endError(void) {
+    printf("\033[0m\n");
+}
+
 
 int main(int argc, char* argv[]) {
     printf("Rex - BareBones Interpreter\n");
@@ -255,7 +263,9 @@ int main(int argc, char* argv[]) {
     } else if (argc == 2) {
         inputFile = argv[1];
     } else {
-        printf("ERROR: Expected at most 1 input, got %d inputs\n", argc-1);
+        beginError();
+        printf("ERROR: Expected at most 1 input, got %d inputs", argc-1);
+        endError();
         return 1;
     }
 
@@ -315,10 +325,23 @@ int main(int argc, char* argv[]) {
         }
 
         else if (strEqual(tokenList[0], "incr")) {
+            if (!declaredVariable(&varTable, tokenList[1])) {
+                // printf("\033[1;31mERROR: variable %s has not been declared\033[0m\n", tokenList[1]);
+                beginError();
+                printf("Variable %s has not been declared", tokenList[1]);
+                endError();
+                break;
+            }
             setVariable(&varTable, tokenList[1], getVariable(&varTable, tokenList[1]) + 1);
         }
 
         else if (strEqual(tokenList[0], "decr")) {
+            if (!declaredVariable(&varTable, tokenList[1])) {
+                beginError();
+                printf("Variable %s has not been declared", tokenList[1]);
+                endError();
+                break;
+            }
             setVariable(&varTable, tokenList[1], getVariable(&varTable, tokenList[1]) - 1);
         }
 
@@ -338,10 +361,12 @@ int main(int argc, char* argv[]) {
         }
 
         else {
-            printf("ERROR: Command %s is not valid\n", tokenList[0]);
+            beginError();
+            printf("Command %s is not valid", tokenList[0]);
+            endError();
             break;
         }
 
     }
-    printf("Execution completed!\n");
+    printf("Interpreter finished.\n");
 }
