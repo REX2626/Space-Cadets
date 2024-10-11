@@ -6,6 +6,24 @@
 
 
 
+bool strEqual(char* str1, char* str2) {
+    int i = 0;
+    while (str1[i] || str2[i]) {
+        if (str1[i] != str2[i]) return false;
+        i++;
+    }
+
+    return true;
+}
+
+void beginError(void) {
+    printf("\033[1;31mERROR: ");
+}
+
+void endError(void) {
+    printf("\033[0m\n");
+}
+
 char** textToStatements(char* input, int* retSize) {
     // Returns a list of statements
     // NOTE: Returned list must be freed
@@ -46,11 +64,12 @@ char** textToStatements(char* input, int* retSize) {
 
 
 char*** statementsToTokens(char** statements, int statementsSize, int** retSizes) {
+    int numWhiles = 0;
     char*** tokenLists = malloc(statementsSize * sizeof(char**));
     for (int i = 0; i < statementsSize; i++) {
 
         char** tokenList = malloc(0);
-        int numTokenLists = 0;
+        int numTokens = 0;
         int idx = 0;
 
         // Go to start of first token
@@ -60,8 +79,8 @@ char*** statementsToTokens(char** statements, int statementsSize, int** retSizes
 
         while (statements[i][idx]) {
 
-            numTokenLists++;
-            tokenList = realloc(tokenList, numTokenLists * sizeof(char*));
+            numTokens++;
+            tokenList = realloc(tokenList, numTokens * sizeof(char*));
 
             // Find length of token
             int start = idx;
@@ -80,7 +99,21 @@ char*** statementsToTokens(char** statements, int statementsSize, int** retSizes
             }
 
             token[length] = 0;
-            tokenList[numTokenLists-1] = token;
+            tokenList[numTokens-1] = token;
+
+            if (numTokens == 1) {
+                if (strEqual(token, "while")) {
+                    numWhiles++;
+                } else if (strEqual(token, "end")) {
+                    numWhiles--;
+                    if (numWhiles < 0) {
+                        beginError();
+                        printf("No while loop found before end command");
+                        endError();
+                        return NULL;
+                    }
+                }
+            }
 
             // Go to start of next token
             while (statements[i][idx] == ' ') {
@@ -89,7 +122,7 @@ char*** statementsToTokens(char** statements, int statementsSize, int** retSizes
 
         }
 
-        (*retSizes)[i] = numTokenLists;
+        (*retSizes)[i] = numTokens;
         tokenLists[i] = tokenList;
     }
 
@@ -99,6 +132,14 @@ char*** statementsToTokens(char** statements, int statementsSize, int** retSizes
     }
 
     free(statements);
+
+    if (numWhiles != 0) {
+        beginError();
+        printf("While loop not terminated with end command");
+        endError();
+        return NULL;
+    }
+
     return tokenLists;
 }
 
@@ -112,16 +153,6 @@ unsigned int hash(char* name) {
     }
 
     return value;
-}
-
-bool strEqual(char* str1, char* str2) {
-    int i = 0;
-    while (str1[i] || str2[i]) {
-        if (str1[i] != str2[i]) return false;
-        i++;
-    }
-
-    return true;
 }
 
 typedef struct {
@@ -263,14 +294,6 @@ void displayVariables(HashTable* varTable) {
     printf("\n");
 }
 
-void beginError(void) {
-    printf("\033[1;31mERROR: ");
-}
-
-void endError(void) {
-    printf("\033[0m\n");
-}
-
 
 int main(int argc, char* argv[]) {
     printf("Rex - BareBones Interpreter\n");
@@ -318,6 +341,7 @@ int main(int argc, char* argv[]) {
     // Generate an array of token lists
     int* numTokens = malloc(numStatements * sizeof(int));
     char*** tokenLists = statementsToTokens(statements, numStatements, &numTokens);
+    if (tokenLists == NULL) return 1;
 
     if (DEBUG) {
         printf("----------\n");

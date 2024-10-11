@@ -1,7 +1,5 @@
 clear x;
-clear y;
-clear z;
-clear a;
-clear b;
-clear c;
-clear d;
+while x not 0 do;
+    incr x;
+end;
+end;
