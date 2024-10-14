@@ -31,8 +31,14 @@ char** textToStatements(char* input, int* retSize) {
 
     int numStatements = 0;
     while (input[length]) {
-        if (input[length] == ';') numStatements++;
-        length++;
+        if (input[length] == '#') {
+            while (input[length] && input[length] != '\n') {
+                length++;
+            }
+        } else {
+            if (input[length] == ';') numStatements++;
+            length++;
+        }
     }
 
     char** statements = malloc(numStatements * sizeof(char*));
@@ -42,20 +48,32 @@ char** textToStatements(char* input, int* retSize) {
         int j = i;
         int lenStatement = 0;
         while (input[j] != ';') {
+            if (input[j] == '#') {
+                while (input[j] != '\n') {
+                    j++;
+                }
+            }
             lenStatement++;
             j++;
         }
 
-        char* statement = malloc((j - i + 1) * sizeof(char));
-        statement[j-i] = 0;
+        char* statement = malloc((lenStatement + 1) * sizeof(char));
+        statement[lenStatement] = 0;
+        int stIdx = 0;
         for (int idx = i; idx < j; idx++) {
-            statement[idx-i] = input[idx];
+            if (input[idx] == '#') {
+                while (input[idx] != '\n') {
+                    idx++;
+                }
+            }
+            statement[stIdx] = input[idx];
+            stIdx++;
         }
 
         statements[countStatement] = statement;
         countStatement++;
         if (countStatement == numStatements) break;
-        i += j - i;
+        i = j;
     }
 
     *retSize = numStatements;
@@ -84,7 +102,7 @@ char*** statementsToTokens(char** statements, int statementsSize, int** retSizes
 
             // Find length of token
             int start = idx;
-            while (statements[i][idx] != ' ') {
+            while (statements[i][idx] != ' ' && statements[i][idx] != '\n' && statements[i][idx] != '\r') {
                 if (statements[i][idx] == 0) {
                     break;
                 }
@@ -116,7 +134,7 @@ char*** statementsToTokens(char** statements, int statementsSize, int** retSizes
             }
 
             // Go to start of next token
-            while (statements[i][idx] == ' ') {
+            while (statements[i][idx] == ' ' || statements[i][idx] == '\n' || statements[i][idx] == '\r') {
                 idx++;
             }
 

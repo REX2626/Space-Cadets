@@ -1,7 +1,2 @@
-clear x;
-clear y;
-incr y;;;;;
-decr y;
-while x not 0 do;
-incr y;
-;;;;end;;;;
+clear x
+clear y
