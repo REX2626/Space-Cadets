@@ -1,2 +1,11 @@
-clear x
-clear y
+clear jadon;
+clear reex;
+
+clear apple;
+# clear apple;
+
+while jadon not 0 do;
+    incr jadon;
+    incr apple;
+    incr reex;
+end;

@@ -225,7 +225,14 @@ void setVariable(HashTable* table, char* name, unsigned int value) {
             for (int i = 0; i < table->maxLength; i++) values[i].name = "";
             for (int i = 0; i < table->maxLength/2; i++) {
                 if (table->values[i].name[0] == 0) continue;
-                values[hash(table->values[i].name) % table->maxLength] = table->values[i];
+
+                // Find empty slot in HashTable
+                idx = hash(table->values[i].name) % table->maxLength;
+                while (values[idx].name[0] != 0) {
+                    idx++;
+                    if (idx == table->maxLength) idx = 0;
+                }
+                values[idx] = table->values[i];
             }
 
             TableValue* oldValues = table->values;
